@@ -1,0 +1,158 @@
+$Stopwach = [system.diagnostics.stopwatch]::StartNew()
+
+#Variable Definition
+$Log = '%%%'
+"$(Get-Date): New Run" | Out-File $log -Append
+$SiteCode = "%%%"
+$ProviderMachineName = "%%%"
+$null = ""
+$Values = Import-csv '%%%' -Delimiter ','
+#The CSV File should be ordered by DisplayName, IP Adress Range, BG Display Name and BG Description. The Delimiter should be ','
+
+#Site Connect
+$initParams = @{}
+if((Get-Module ConfigurationManager) -eq $null) {
+    Import-Module "$($ENV:SMS_ADMIN_UI_PATH)\..\ConfigurationManager.psd1" @initParams 
+}
+if((Get-PSDrive -Name $SiteCode -PSProvider CMSite -ErrorAction SilentlyContinue) -eq $null) {
+    New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $ProviderMachineName @initParams
+}
+Set-Location "$($SiteCode):\" @initParams
+
+
+$ExistingBoundaries = Get-CMBoundary
+
+foreach ($item in $values)
+{
+    $DisplayName = $item.DisplayName
+    $IpAdressRange = $item.IPAddressRange
+    $BGDisplayName = $Item.BGDisplayName
+    $BGDescription = $Item.BGDescription
+
+   $ExistingBG = Get-CMBoundaryGroup -Name $BGDisplayName
+
+    $ExistingBoundaryValue = ($ExistingBoundaries | Where-Object -Property Value -eq $IpAdressRange)
+
+    if ($ExistingBG -eq $null)
+    {
+        New-CMBoundaryGroup -Description $BGDescription -Name $BGDisplayName
+        "$(Get-Date): Boundary Group $BGDesciption created" | Out-File $log -Append
+    }
+    else
+    {
+        "$(Get-Date): Boundary Group $BGDescription already exist" | Out-File $log -Append
+    }
+
+    if ($ExistingBoundaryValue -eq $null)
+    {
+        "$(Get-Date): $IpAdressRange is not part of any existing Boundary and will be created." | out-file $Log -Append
+        $ExistingBoundary = Get-CMBoundary -Name $DisplayName
+        if ($ExistingBoundary -eq $null)
+        {
+            "$(Get-Date): Creating Boundary" | Out-File $Log -Append
+            New-CMBoundary -Name $DisplayName -BoundaryType IPRange -value $IpAdressRange
+            "$(Get-Date): Boundary $DisplayName created." | Out-File $log -Append
+            Add-CMBoundaryToGroup -BoundaryName $DisplayName -BoundaryGroupName $BGDisplayName
+            continue
+        }
+        else
+        {
+            "$(Get-Date): Boundary $DisplayName already exist. It will be created with an higher count." | Out-File $log -Append
+            $DisplayNameI = $DisplayName + " I"
+            $TestI = Get-CMBoundary -Name $DisplayNameI
+            if ($TestI -eq $null)
+            {
+                New-CMBoundary -Name $DisplayNameI -BoundaryType IPRange -value $IpAdressRange
+                "$(Get-Date): $DisplayName already exist. Created $DisplayNameI" | Out-File $log -Append
+                Add-CMBoundaryToGroup -BoundaryName $DisplayNameI -BoundaryGroupName $BGDisplayName
+                "$(Get-Date): Joined $DisplayNameI to $BGDescription" | Out-File $log -Append
+            }
+            else
+            {
+                $DisplayNameII = $DisplayName  + " II"
+                $TestII = Get-CMBoundary -Name $DisplayNameII
+                if ($TestII -eq $null)
+                {
+                    New-CMBoundary -Name $DisplaynameII -BoundaryType IPRange -value $IpAdressRange
+                    "$(Get-Date): $DisplayName and $DisplayNameI already exist. Created $DisplayNameII" | Out-File $log -Append
+                    Add-CMBoundaryToGroup -BoundaryName $DisplayNameII -BoundaryGroupName $BGDisplayName
+                    "$(Get-Date): Joined $DisplayNameII to $BGDescription" | Out-File $log -Append
+                }
+                else
+                {
+                    $DisplayNameIII = $DisplayName + " III"
+                    $TestIII = Get-CMBoundary -Name $DisplayNameIII
+                    if ($TestIII -eq $null)
+                    {
+                        New-CMBoundary -Name $DisplaynameIII -BoundaryType IPRange -value $IpAdressRange
+                        "$(Get-Date): $DisplayName, $DisplayNameI and $DisplayNameII already exist. Created $DisplayNameIII" | Out-File $log -Append
+                        Add-CMBoundaryToGroup -BoundaryName $DisplayNameIII -BoundaryGroupName $BGDisplayName
+                        "$(Get-Date): Joined $DisplayNameIII to $BGDescription" | Out-File $log -Append
+                    }
+                    else
+                    {
+                        $DisplayNameIV = $DisplayName + " IV"
+                        $TestIV = Get-CMBoundary -name $DisplayNameIV
+                        if ($TestIV -eq $null)
+                        {
+                            New-CMBoundary -Name $DisplayNameIV -BoundaryType IPRange -value $IpAdressRange
+                            "$(Get-Date): $DisplayName, $DisplayNameI, $DisplayNameII and $DisplayNameIII already exist. Created $DisplayNameIV" | Out-File $log -Append
+                            Add-CMBoundaryToGroup -BoundaryName $DisplayNameIV -BoundaryGroupName $BGDisplayName
+                            "$(Get-Date): Joined $DisplayNameIV to $BGDescription" | Out-File $log -Append
+                        }
+                        else
+                        {
+                            $DisplayNameV = $DisplayName + " V"
+                            $TestV = Get-CMBoundary -name $DisplayNameV
+                            if ($TestV -eq $null)
+                            {
+                                New-CMBoundary -Name $DisplayNameV -BoundaryType IPRange -value $IpAdressRange
+                                "$(Get-Date): $DisplayName, $DisplayNameI, $DisplayNameII, $DisplayNameIII and $DisplayNameIV already exist. Created $DisplayNameV" | Out-File $log -Append
+                                Add-CMBoundaryToGroup -BoundaryName $DisplayNameV -BoundaryGroupName $BGDisplayName
+                                "$(Get-Date): Joined $DisplayNameV to $BGDescription" | Out-File $log -Append
+                            else
+                            {
+                                $DisplayNameVI = $DisplayName + "VI"
+                                $TestVI = Get-CMBoundary -name $DisplayNameVI
+                                if ($TestVI -eq $null)
+                                {
+                                    New-CMBoundary -Name $DisplayNameVI -BoundaryType IPRange -value $IpAdressRange
+                                    "$(Get-Date): $DisplayName, $DisplayNameI, $DisplayNameII, $DisplayNameIII, $DisplayNameIV and $DisplayNameV already exist. Created $DisplayNameVI" | Out-File $log -Append
+                                    Add-CMBoundaryToGroup -BoundaryName $DisplayNameV -BoundaryGroupName $BGDisplayName
+                                    "$(Get-Date): Joined $DisplayNameVI to $BGDescription" | Out-File $log -Append
+                                }
+                                else
+                                {
+                                    $DisplayNameVII = $DisplayName + "VII"
+                                    $TestVII = Get-CMBoundary -name $DisplayNameVII
+                                    if ($TestVII -eq $null)
+                                    {
+                                        New-CMBoundary -Name $DisplayNameVII -BoundaryType IPRange -Value $IpAdressRange
+                                        "$(Get-Date): $DisplayName, $DisplayNameI, $DisplayNameII, $DisplayNameIII, $DisplayNameIV, $DisplayNameV and $DisplayNameVI already exist. Created $DisplayNameVII" | Out-File $log -Append
+                                        Add-CMBoundaryToGroup -BoundaryName $DisplayNameVII -BoundaryGroupName $BGDisplayName
+                                        "$(Get-Date): Joined $DisplayNameVII to $BGDescription" | Out-File $log -Append
+                                    }
+
+                                }
+                            }
+                        }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        $ExistingBoundaryName = $ExistingBoundaryValue.DisplayName
+        "$(Get-Date): Error: $IPAdressRange is already part of $ExistingBoundaryName" | out-file $Log -Append
+    }
+
+}
+
+$Stopwach.Stop
+$Runtime = $Stopwach.Elapsed.TotalSeconds
+
+"$(Get-Date): End Run" | out-file $Log -Append
+"TotalRunTime: $Runtime Seconds" | out-file $Log -Append
+"------------------------------" | out-file $Log -Append 
