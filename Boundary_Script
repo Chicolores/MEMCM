@@ -1,3 +1,15 @@
+#####
+#The CSV File should be structured as DisplayName, IPAddressRange, BGDisplayName, BGDescription.
+#This Script will detect the Boundary Group and, if it's necessary create a new one. This script 
+#also check if the value is already assigned to a existing Boundary. If the Name of the Boundary 
+#already exist, it will create it with an higher count (I, II,...,VII). To define the Values you 
+#have to edit the following Variables:
+#
+#- $Sitecode: The Site Code of the Site you want to make the Changes
+#- $ProviderMachineName: FQDN of the Site Server you want to make the Changes
+#- $Values: Path the the *.CSV File
+#- $Log: Path were the Log File should be created
+#####
 $Stopwach = [system.diagnostics.stopwatch]::StartNew()
 
 #Variable Definition
